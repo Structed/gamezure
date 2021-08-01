@@ -14,18 +14,18 @@ using Microsoft.Extensions.Logging;
 
 namespace Gamezure.VmPoolManager
 {
-    public class AddVm
+    public class EnsureVMs
     {
         private readonly PoolRepository poolRepository;
         private readonly PoolManager poolManager;
 
-        public AddVm(PoolRepository poolRepository, PoolManager poolManager)
+        public EnsureVMs(PoolRepository poolRepository, PoolManager poolManager)
         {
             this.poolRepository = poolRepository;
             this.poolManager = poolManager;
         }
         
-        [FunctionName("AddVm")]
+        [FunctionName("EnsureVMs")]
         public async Task<IActionResult> RunAsync(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = null)]
             HttpRequest req, ILogger log)
