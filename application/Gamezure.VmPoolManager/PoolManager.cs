@@ -50,14 +50,11 @@ namespace Gamezure.VmPoolManager
         
         public async Task<VirtualMachine> CreateVm(VmCreateParams vmCreateParams)
         {
-            Response<ResourceGroup> rgResponse = await resourceGroupsClient.GetAsync(vmCreateParams.ResourceGroupName);
-            ResourceGroup resourceGroup = rgResponse.Value;
-            
             VirtualNetwork vnet = await EnsureVnet(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.VnetName);
 
             var ipAddress = await CreatePublicIpAddressAsync(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.Name);
             var nic = await CreateNetworkInterfaceAsync(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.Name, vnet.Subnets.First().Id, ipAddress.Id);
-            VirtualMachine vm = await CreateWindowsVm(resourceGroup, vmCreateParams, nic, virtualMachinesClient); 
+            VirtualMachine vm = await CreateWindowsVmAsync(vmCreateParams, nic.Id); 
 
             return vm;
         }
@@ -138,12 +135,11 @@ namespace Gamezure.VmPoolManager
             return vnet;
         }
 
-        public async Task<VirtualMachine> CreateWindowsVm(ResourceGroup resourceGroup, VmCreateParams vmCreateParams,
-            NetworkInterface nic, VirtualMachinesOperations computeClientVirtualMachines)
+        public async Task<VirtualMachine> CreateWindowsVmAsync(VmCreateParams vmCreateParams, string nicId)
         {
             // Create Windows VM
 
-            var windowsVM = new VirtualMachine(resourceGroup.Location)
+            var windowsVM = new VirtualMachine(vmCreateParams.ResourceLocation)
             {
                 OsProfile = new OSProfile
                 {
@@ -167,10 +163,10 @@ namespace Gamezure.VmPoolManager
             };
             
             
-            windowsVM.NetworkProfile.NetworkInterfaces.Add(new NetworkInterfaceReference { Id = nic.Id });
+            windowsVM.NetworkProfile.NetworkInterfaces.Add(new NetworkInterfaceReference { Id = nicId });
 
-            windowsVM = await (await computeClientVirtualMachines
-                .StartCreateOrUpdateAsync(resourceGroup.Name, vmCreateParams.Name, windowsVM)).WaitForCompletionAsync();
+            windowsVM = await (await this.virtualMachinesClient
+                .StartCreateOrUpdateAsync(vmCreateParams.ResourceGroupName, vmCreateParams.Name, windowsVM)).WaitForCompletionAsync();
 
             return windowsVM;
         }
