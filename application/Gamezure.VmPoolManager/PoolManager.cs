@@ -10,7 +10,6 @@ using Azure.ResourceManager.Network;
 using Azure.ResourceManager.Network.Models;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
-using Microsoft.Extensions.Logging;
 using IPVersion = Azure.ResourceManager.Network.Models.IPVersion;
 using NetworkInterface = Azure.ResourceManager.Network.Models.NetworkInterface;
 using NetworkProfile = Azure.ResourceManager.Compute.Models.NetworkProfile;
@@ -19,7 +18,6 @@ namespace Gamezure.VmPoolManager
 {
     public class PoolManager
     {
-        private readonly ILogger log;
         private readonly string subscriptionId;
         private readonly TokenCredential credential;
         private readonly ResourcesManagementClient resourceClient;
@@ -29,9 +27,8 @@ namespace Gamezure.VmPoolManager
         private readonly VirtualMachinesOperations virtualMachinesClient;
         private readonly VirtualNetworksOperations virtualNetworksClient;
 
-        public PoolManager(ILogger log, string subscriptionId, TokenCredential credential)
+        public PoolManager(string subscriptionId, TokenCredential credential)
         {
-            this.log = log;
             this.subscriptionId = subscriptionId;
             this.credential = credential;
             
@@ -44,7 +41,7 @@ namespace Gamezure.VmPoolManager
             virtualNetworksClient = networkManagementClient.VirtualNetworks;
         }
 
-        public PoolManager(ILogger log, string subscriptionId) : this(log, subscriptionId, new DefaultAzureCredential())
+        public PoolManager(string subscriptionId) : this(subscriptionId, new DefaultAzureCredential())
         {
         }
         
@@ -62,28 +59,11 @@ namespace Gamezure.VmPoolManager
         public async Task<bool> GuardResourceGroup(string name)
         {
             bool exists = false;
-            try
-            {
-                Response rgExists =
-                    await resourceGroupsClient.CheckExistenceAsync(name);
+            Response rgExists = await resourceGroupsClient.CheckExistenceAsync(name);
 
-                if (rgExists.Status == 204) // 204 - No Content
-                {
-                    exists = true;
-                }
-            }
-            catch (RequestFailedException requestFailedException)
+            if (rgExists.Status == 204) // 204 - No Content
             {
-                switch (requestFailedException.Status)
-                {
-                    case 403:   // 403 - Forbidden
-                        log.LogError(requestFailedException,
-                            "No permission to read a resource group with the name {RgName}", name);
-                        break;
-                    default:
-                        log.LogError(requestFailedException, "Request failed");
-                        break;
-                }
+                exists = true;
             }
 
             return exists;

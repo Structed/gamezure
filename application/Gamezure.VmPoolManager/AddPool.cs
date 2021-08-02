@@ -16,10 +16,12 @@ namespace Gamezure.VmPoolManager
     public class AddPool
     {
         private readonly PoolRepository poolRepository;
+        private readonly PoolManager poolManager;
 
-        public AddPool(PoolRepository poolRepository)
+        public AddPool(PoolRepository poolRepository, PoolManager poolManager)
         {
             this.poolRepository = poolRepository;
+            this.poolManager = poolManager;
         }
         
         [FunctionName("AddPool")]
@@ -48,9 +50,6 @@ namespace Gamezure.VmPoolManager
                 {
                     return new ObjectResult(e) {StatusCode = (int)e.StatusCode};
                 }
-
-                string subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
-                var poolManager = new PoolManager(log, subscriptionId);
 
                 //await poolManager.CreateResourceGroup(pool.ResourceGroupName, pool.Location);
                 string vnetName = pool.Id + "-vnet";

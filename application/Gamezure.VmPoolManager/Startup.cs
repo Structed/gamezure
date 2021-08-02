@@ -14,9 +14,10 @@ namespace Gamezure.VmPoolManager
             // builder.Services.AddHttpClient();
 
             string connectionString = Environment.GetEnvironmentVariable("CosmosDb");
-            builder.Services.AddSingleton<PoolRepository>((s) => {
-                return new PoolRepository(connectionString);
-            });
+            builder.Services.AddSingleton(s => new PoolRepository(connectionString));
+
+            string subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
+            builder.Services.AddSingleton<PoolManager>(s => new PoolManager(subscriptionId));
         }
     }
 }

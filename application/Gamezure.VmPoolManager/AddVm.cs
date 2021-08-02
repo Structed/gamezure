@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using Azure;
 using Azure.ResourceManager.Compute.Models;
 using Gamezure.VmPoolManager.Repository;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +14,19 @@ using Microsoft.Extensions.Logging;
 
 namespace Gamezure.VmPoolManager
 {
-    public static class AddVm
+    public class AddVm
     {
+        private readonly PoolRepository poolRepository;
+        private readonly PoolManager poolManager;
+
+        public AddVm(PoolRepository poolRepository, PoolManager poolManager)
+        {
+            this.poolRepository = poolRepository;
+            this.poolManager = poolManager;
+        }
+        
         [FunctionName("AddVm")]
-        public static async Task<IActionResult> RunAsync(
+        public async Task<IActionResult> RunAsync(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = null)]
             HttpRequest req, ILogger log)
         {
@@ -27,9 +37,6 @@ namespace Gamezure.VmPoolManager
             {
                 return new BadRequestObjectResult("Please pass a `poolid` as query parameter");
             }
-
-            string connectionString = Environment.GetEnvironmentVariable("CosmosDb");
-            var poolRepository = new PoolRepository(connectionString);
 
             Pool pool = null;
             try
@@ -42,13 +49,23 @@ namespace Gamezure.VmPoolManager
                 return new NotFoundObjectResult($"Could not find VM Pool {poolId}");
             }
 
-            string subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
-            var poolManager = new PoolManager(log, subscriptionId);
-            
-            bool resourceGroupExists = await poolManager.GuardResourceGroup(pool.ResourceGroupName);
-            if (!resourceGroupExists)
+            try
             {
-                return new NotFoundObjectResult($"Resource group {pool.ResourceGroupName} was not found.");
+                bool resourceGroupExists = await poolManager.GuardResourceGroup(pool.ResourceGroupName);
+                if (!resourceGroupExists)
+                {
+                    return new NotFoundObjectResult($"Resource group {pool.ResourceGroupName} was not found.");
+                }
+            }
+            catch (RequestFailedException requestFailedException)
+            {
+                switch (requestFailedException.Status)
+                {
+                    case 403:   // 403 - Forbidden
+                        return new UnauthorizedResult();
+                    default:
+                        return new ObjectResult(requestFailedException) { StatusCode = requestFailedException.Status};
+                }
             }
 
             string vnetName = "gamezure-vmpool-vnet";
