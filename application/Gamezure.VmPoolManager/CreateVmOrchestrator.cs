@@ -35,7 +35,7 @@ namespace Gamezure.VmPoolManager
 
             // returns ["Hello Tokyo!", "Hello Seattle!", "Hello London!"]
 
-            string poolId = "";
+            string poolId = context.GetInput<string>();
             // await context.CallActivityAsync<string>("CreateVmOrchestrator_GetPool", new {poolId, poolRepository, log});
             
             return outputs;
