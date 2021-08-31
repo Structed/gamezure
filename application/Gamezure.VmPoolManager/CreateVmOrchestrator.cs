@@ -50,7 +50,7 @@ namespace Gamezure.VmPoolManager
 
         [FunctionName("CreateVmOrchestrator_HttpStart")]
         public async Task<HttpResponseMessage> HttpStart(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "put")]
             HttpRequestMessage req,
             [DurableClient] IDurableOrchestrationClient starter,
             ILogger log)
