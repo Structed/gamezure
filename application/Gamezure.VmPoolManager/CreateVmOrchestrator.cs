@@ -44,6 +44,15 @@ namespace Gamezure.VmPoolManager
 
             
             //  Ensure VNet
+            var vnetParams = new VnetParameters
+            {
+                Name = $"{pool.Id}-vnet",
+                Location = resourceGroupResponse.Location,
+                ResourceGroupName = resourceGroupResponse.Name
+            };
+            var vnetResponse = await context.CallActivityAsync<VnetResponse>("CreateVmOrchestrator_EnsureVnet", vnetParams);
+            outputs.Add(JsonConvert.SerializeObject(vnetResponse));
+
             
             // Determine VMs present
             
@@ -112,6 +121,18 @@ namespace Gamezure.VmPoolManager
                 Id = rg.Id,
                 Name = rg.Name,
                 Location = rg.Location
+            };
+        }
+
+        [FunctionName("CreateVmOrchestrator_EnsureVnet")]
+        public async Task<VnetResponse> EnsureVnet([ActivityTrigger] VnetParameters vnetParameters, ILogger log)
+        {
+            var vnet = await this.poolManager.EnsureVnet(vnetParameters.ResourceGroupName, vnetParameters.Location, vnetParameters.Name);
+            return new VnetResponse
+            {
+                Id = vnet.Id,
+                Name = vnet.Name,
+                Location = vnet.Location,
             };
         }
         
