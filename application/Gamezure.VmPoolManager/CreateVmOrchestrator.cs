@@ -4,12 +4,15 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Network.Models;
+using Gamezure.VmPoolManager.Parameters;
 using Gamezure.VmPoolManager.Repository;
+using Gamezure.VmPoolManager.Responses;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Gamezure.VmPoolManager
 {
@@ -25,16 +28,21 @@ namespace Gamezure.VmPoolManager
         }
 
         [FunctionName("CreateVmOrchestrator")]
-        public async Task<List<Pool>> RunOrchestrator(
+        public async Task<List<string>> RunOrchestrator(
             [OrchestrationTrigger] IDurableOrchestrationContext context)
         {
-            var outputs = new List<Pool>();
+            var outputs = new List<string>();
             var poolId = context.GetInput<string>();
-            outputs.Add(await context.CallActivityAsync<Pool>("CreateVmOrchestrator_GetPool", poolId));
+            Pool pool = await context.CallActivityAsync<Pool>("CreateVmOrchestrator_GetPool", poolId);
+            outputs.Add(JsonConvert.SerializeObject(pool));
             
-            /* TODO:
             // Check and potentially create:
             //  RG Exists & create
+            var rgParams = new ResourceGroupParameters { Name = pool.ResourceGroupName, Location = pool.Location };
+            var resourceGroupResponse = await context.CallActivityAsync<ResourceGroupResponse>("CreateVmOrchestrator_EnsureResourceGroup", rgParams);
+            outputs.Add(JsonConvert.SerializeObject(resourceGroupResponse));
+
+            
             //  Ensure VNet
             
             // Determine VMs present
@@ -42,7 +50,6 @@ namespace Gamezure.VmPoolManager
             // Create per new VM:
             //  Create PIP
             //  Create Windows VM
-            */
             
             return outputs;
         }
@@ -94,6 +101,18 @@ namespace Gamezure.VmPoolManager
             }
 
             return null;
+        }
+
+        [FunctionName("CreateVmOrchestrator_EnsureResourceGroup")]
+        public async Task<ResourceGroupResponse> EnsureResourceGroup([ActivityTrigger] ResourceGroupParameters resourceGroupParameters, ILogger log)
+        {
+            var rg = await this.poolManager.CreateResourceGroup(resourceGroupParameters.Name, resourceGroupParameters.Location);
+            return new ResourceGroupResponse
+            {
+                Id = rg.Id,
+                Name = rg.Name,
+                Location = rg.Location
+            };
         }
         
         [FunctionName("CreateVmOrchestrator_CreatePublicIp")]
