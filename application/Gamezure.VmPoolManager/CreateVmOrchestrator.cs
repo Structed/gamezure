@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Network.Models;
 using Gamezure.VmPoolManager.Repository;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -23,20 +25,14 @@ namespace Gamezure.VmPoolManager
         }
 
         [FunctionName("CreateVmOrchestrator")]
-        public async Task<List<string>> RunOrchestrator(
+        public async Task<List<Pool>> RunOrchestrator(
             [OrchestrationTrigger] IDurableOrchestrationContext context)
         {
-            var outputs = new List<string>();
-
-            // Replace "hello" with the name of your Durable Activity Function.
-            outputs.Add(await context.CallActivityAsync<string>("CreateVmOrchestrator_Hello", "Tokyo"));
-            outputs.Add(await context.CallActivityAsync<string>("CreateVmOrchestrator_Hello", "Seattle"));
-            outputs.Add(await context.CallActivityAsync<string>("CreateVmOrchestrator_Hello", "London"));
-
-            // returns ["Hello Tokyo!", "Hello Seattle!", "Hello London!"]
-
-            var poolId = context.GetInput<int>();
-            // await context.CallActivityAsync<string>("CreateVmOrchestrator_GetPool", new {poolId, poolRepository, log});
+            var outputs = new List<Pool>();
+            var poolId = context.GetInput<string>();
+            outputs.Add(await context.CallActivityAsync<Pool>("CreateVmOrchestrator_GetPool", poolId));
+            
+            // EnsureVMs
             
             return outputs;
         }
@@ -69,7 +65,25 @@ namespace Gamezure.VmPoolManager
         {
             log.LogInformation($"fetching Pool' ({poolId}) data");
 
-            return await poolRepository.Get(poolId);
+            try
+            {
+                return await poolRepository.Get(poolId);
+            }
+            catch (CosmosException cosmosException)
+            {
+                switch (cosmosException.StatusCode)
+                {
+                    case HttpStatusCode.NotFound:
+                        log.LogError($"Could not find Pool with ID {poolId}");
+                        log.LogError(cosmosException, "Ex");
+                        break;
+                    default:
+                        throw;
+                }
+                
+            }
+
+            return null;
         }
         
         [FunctionName("CreateVmOrchestrator_CreatePublicIp")]
