@@ -35,7 +35,7 @@ namespace Gamezure.VmPoolManager
 
             // returns ["Hello Tokyo!", "Hello Seattle!", "Hello London!"]
 
-            string poolId = context.GetInput<string>();
+            var poolId = context.GetInput<int>();
             // await context.CallActivityAsync<string>("CreateVmOrchestrator_GetPool", new {poolId, poolRepository, log});
             
             return outputs;
@@ -55,8 +55,9 @@ namespace Gamezure.VmPoolManager
             [DurableClient] IDurableOrchestrationClient starter,
             ILogger log)
         {
+            var poolId = req.RequestUri.ParseQueryString().Get("poolId");
             // Function input comes from the request content.
-            string instanceId = await starter.StartNewAsync("CreateVmOrchestrator", null);
+            string instanceId = await starter.StartNewAsync("CreateVmOrchestrator", null, poolId);
 
             log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
 
