@@ -32,7 +32,17 @@ namespace Gamezure.VmPoolManager
             var poolId = context.GetInput<string>();
             outputs.Add(await context.CallActivityAsync<Pool>("CreateVmOrchestrator_GetPool", poolId));
             
-            // EnsureVMs
+            /* TODO:
+            // Check and potentially create:
+            //  RG Exists & create
+            //  Ensure VNet
+            
+            // Determine VMs present
+            
+            // Create per new VM:
+            //  Create PIP
+            //  Create Windows VM
+            */
             
             return outputs;
         }
