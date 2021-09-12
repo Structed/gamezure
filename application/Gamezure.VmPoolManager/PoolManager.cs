@@ -10,8 +10,11 @@ using Azure.ResourceManager.Network;
 using Azure.ResourceManager.Network.Models;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
+using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.Network.Fluent;
 using IPVersion = Azure.ResourceManager.Network.Models.IPVersion;
 using NetworkInterface = Azure.ResourceManager.Network.Models.NetworkInterface;
+using NetworkManagementClient = Azure.ResourceManager.Network.NetworkManagementClient;
 using NetworkProfile = Azure.ResourceManager.Compute.Models.NetworkProfile;
 
 namespace Gamezure.VmPoolManager
@@ -20,6 +23,7 @@ namespace Gamezure.VmPoolManager
     {
         private readonly string subscriptionId;
         private readonly TokenCredential credential;
+        private readonly IAzure azure;
         private readonly ResourcesManagementClient resourceClient;
         private readonly ComputeManagementClient computeClient;
         private readonly NetworkManagementClient networkManagementClient;
@@ -27,11 +31,12 @@ namespace Gamezure.VmPoolManager
         private readonly VirtualMachinesOperations virtualMachinesClient;
         private readonly VirtualNetworksOperations virtualNetworksClient;
 
-        public PoolManager(string subscriptionId, TokenCredential credential)
+        public PoolManager(string subscriptionId, TokenCredential credential, IAzure azure)
         {
             this.subscriptionId = subscriptionId;
             this.credential = credential;
-            
+            this.azure = azure;
+
             resourceClient = new ResourcesManagementClient(this.subscriptionId, this.credential);
             computeClient = new ComputeManagementClient(this.subscriptionId, this.credential);
             networkManagementClient = new NetworkManagementClient(this.subscriptionId, this.credential);
@@ -41,7 +46,7 @@ namespace Gamezure.VmPoolManager
             virtualNetworksClient = networkManagementClient.VirtualNetworks;
         }
 
-        public PoolManager(string subscriptionId) : this(subscriptionId, new DefaultAzureCredential())
+        public PoolManager(string subscriptionId, IAzure azure) : this(subscriptionId, new DefaultAzureCredential(), azure)
         {
         }
         
@@ -86,6 +91,51 @@ namespace Gamezure.VmPoolManager
             var vnetResponse = await this.virtualNetworksClient.GetAsync(resourceGroupName, vnetName);
 
             return vnetResponse.Value;
+        }
+
+        public INetwork CreateVnet(string rgName, string location, string prefix)
+        {
+            var network = azure.Networks.Define($"{prefix}-vnet")
+                .WithRegion(location)
+                .WithExistingResourceGroup(rgName)
+                .WithAddressSpace("10.0.0.0/28")
+                .WithSubnet("default", "10.0.0.0/29")
+                .Create();
+            
+            return network;
+        }
+
+        public INetworkSecurityGroup CreateNetworkSecurityGroup(string rgName, string location, string prefix)
+        {
+            var name = $"{prefix}-nsg";
+            
+            int port = 25565;
+            var networkSecurityGroup = azure.NetworkSecurityGroups.Define(name)
+                .WithRegion(location)
+                .WithExistingResourceGroup(rgName)
+                .DefineRule("minecraft-tcp")
+                .AllowInbound()
+                .FromAnyAddress()
+                .FromAnyPort()
+                .ToAnyAddress()
+                .ToPort(port)
+                .WithProtocol(Microsoft.Azure.Management.Network.Fluent.Models.SecurityRuleProtocol.Tcp)
+                .WithPriority(100)
+                .WithDescription("Allow Minecraft TCP")
+                .Attach()
+                .DefineRule("minecraft-udp")
+                .AllowInbound()
+                .FromAnyAddress()
+                .FromAnyPort()
+                .ToAnyAddress()
+                .ToPort(port)
+                .WithProtocol(Microsoft.Azure.Management.Network.Fluent.Models.SecurityRuleProtocol.Udp)
+                .WithPriority(101)
+                .WithDescription("Allow Minecraft UDP")
+                .Attach()
+                .Create();
+            
+            return networkSecurityGroup;
         }
 
         public async Task<ResourceGroup> CreateResourceGroup(string resourceGroupName, string region)
@@ -190,40 +240,9 @@ namespace Gamezure.VmPoolManager
             ipAddress = await this.networkManagementClient.PublicIPAddresses
                 .StartCreateOrUpdate(rgName, namePrefix + "_ip", ipAddress)
                 .WaitForCompletionAsync();
-            
+
             return ipAddress;
         }
-
-        // public async Task<NetworkSecurityGroup> CreateNetworkSecurityGroup(string name, string rgName, string location, IAzure azure)
-        // {
-        //     int port = 25565;
-        //     var networkSecurityGroup = azure.NetworkSecurityGroups.Define(name)
-        //         .WithRegion(location)
-        //         .WithExistingResourceGroup(rgName)
-        //         .DefineRule("minecraft-tcp")
-        //         .AllowInbound()
-        //         .FromAnyAddress()
-        //         .FromAnyPort()
-        //         .ToAnyAddress()
-        //         .ToPort(port)
-        //         .WithProtocol(SecurityRuleProtocol.Tcp)
-        //         .WithPriority(100)
-        //         .WithDescription("Allow Minecraft TCP")
-        //         .Attach()
-        //         .DefineRule("minecraft-udp")
-        //         .AllowInbound()
-        //         .FromAnyAddress()
-        //         .FromAnyPort()
-        //         .ToAnyAddress()
-        //         .ToPort(port)
-        //         .WithProtocol(SecurityRuleProtocol.Udp)
-        //         .WithPriority(101)
-        //         .WithDescription("Allow Minecraft UDP")
-        //         .Attach()
-        //         .Create();
-        //
-        //     return networkSecurityGroup;
-        // }
 
         public readonly struct VmCreateParams
         {

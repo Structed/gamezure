@@ -33,7 +33,6 @@ namespace Gamezure.VmPoolManager
 
             try
             {
-
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 Pool pool = JsonConvert.DeserializeObject<Pool>(requestBody);
                 pool.ResourceGroupName = "gamezure-vmpool-rg";
@@ -52,8 +51,10 @@ namespace Gamezure.VmPoolManager
                 }
 
                 pool.InitializeVmList();
-                pool.VnetName = pool.Id + "-vnet";
-                await poolManager.EnsureVnet(pool.ResourceGroupName, pool.Location, pool.VnetName);
+
+                var network = poolManager.CreateVnet(pool.ResourceGroupName, pool.Location, pool.Id);
+                poolManager.CreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, network.Name);
+                pool.VnetName = network.Name;
                 
                 try
                 {
