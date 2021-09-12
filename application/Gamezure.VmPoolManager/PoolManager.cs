@@ -93,13 +93,20 @@ namespace Gamezure.VmPoolManager
             return vnetResponse.Value;
         }
 
-        public INetwork CreateVnet(string rgName, string location, string prefix)
+        public INetwork CreateVnet(string rgName, string location, string prefix, INetworkSecurityGroup nsgPublic, INetworkSecurityGroup nsgGame)
         {
             var network = azure.Networks.Define($"{prefix}-vnet")
                 .WithRegion(location)
                 .WithExistingResourceGroup(rgName)
-                .WithAddressSpace("10.0.0.0/28")
-                .WithSubnet("default", "10.0.0.0/29")
+                .WithAddressSpace("10.0.0.0/24")
+                .DefineSubnet("public")
+                    .WithAddressPrefix("10.0.0.0/27")
+                    .WithExistingNetworkSecurityGroup(nsgPublic)
+                    .Attach()
+                .DefineSubnet("game")
+                    .WithAddressPrefix("10.0.0.32/27")
+                    .WithExistingNetworkSecurityGroup(nsgGame)
+                    .Attach()
                 .Create();
             
             return network;

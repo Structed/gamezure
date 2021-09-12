@@ -52,8 +52,9 @@ namespace Gamezure.VmPoolManager
 
                 pool.InitializeVmList();
 
-                var network = poolManager.CreateVnet(pool.ResourceGroupName, pool.Location, pool.Id);
-                poolManager.CreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, network.Name);
+                var nsgPublic = poolManager.CreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, pool.Id + "-public");
+                var nsgGame = poolManager.CreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, pool.Id + "-game");
+                var network = poolManager.CreateVnet(pool.ResourceGroupName, pool.Location, pool.Id, nsgPublic, nsgGame);
                 pool.VnetName = network.Name;
                 
                 try
