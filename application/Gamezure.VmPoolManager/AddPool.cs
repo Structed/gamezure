@@ -51,9 +51,9 @@ namespace Gamezure.VmPoolManager
                     return new ObjectResult(e) {StatusCode = (int)e.StatusCode};
                 }
 
-                //await poolManager.CreateResourceGroup(pool.ResourceGroupName, pool.Location);
-                string vnetName = pool.Id + "-vnet";
-                await poolManager.EnsureVnet(pool.ResourceGroupName, pool.Location, vnetName);
+                pool.InitializeVmList();
+                pool.VnetName = pool.Id + "-vnet";
+                await poolManager.EnsureVnet(pool.ResourceGroupName, pool.Location, pool.VnetName);
                 
                 try
                 {
