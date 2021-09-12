@@ -38,20 +38,20 @@ namespace Gamezure.VmPoolManager
             
             // Check and potentially create:
             //  RG Exists & create
-            var rgParams = new ResourceGroupParameters { Name = pool.ResourceGroupName, Location = pool.Location };
-            var resourceGroupResponse = await context.CallActivityAsync<ResourceGroupResponse>("CreateVmOrchestrator_EnsureResourceGroup", rgParams);
-            outputs.Add(JsonConvert.SerializeObject(resourceGroupResponse));
-
-            
-            //  Ensure VNet
-            var vnetParams = new VnetParameters
-            {
-                Name = $"{pool.Id}-vnet",
-                Location = resourceGroupResponse.Location,
-                ResourceGroupName = resourceGroupResponse.Name
-            };
-            var vnetResponse = await context.CallActivityAsync<VnetResponse>("CreateVmOrchestrator_EnsureVnet", vnetParams);
-            outputs.Add(JsonConvert.SerializeObject(vnetResponse));
+            // var rgParams = new ResourceGroupParameters { Name = pool.ResourceGroupName, Location = pool.Location };
+            // var resourceGroupResponse = await context.CallActivityAsync<ResourceGroupResponse>("CreateVmOrchestrator_EnsureResourceGroup", rgParams);
+            // outputs.Add(JsonConvert.SerializeObject(resourceGroupResponse));
+            //
+            //
+            // //  Ensure VNet
+            // var vnetParams = new VnetParameters
+            // {
+            //     Name = $"{pool.Id}-vnet",
+            //     Location = resourceGroupResponse.Location,
+            //     ResourceGroupName = resourceGroupResponse.Name
+            // };
+            // var vnetResponse = await context.CallActivityAsync<VnetResponse>("CreateVmOrchestrator_EnsureVnet", vnetParams);
+            // outputs.Add(JsonConvert.SerializeObject(vnetResponse));
 
             
             // Determine VMs present
