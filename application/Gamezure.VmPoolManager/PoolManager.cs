@@ -194,6 +194,37 @@ namespace Gamezure.VmPoolManager
             return ipAddress;
         }
 
+        // public async Task<NetworkSecurityGroup> CreateNetworkSecurityGroup(string name, string rgName, string location, IAzure azure)
+        // {
+        //     int port = 25565;
+        //     var networkSecurityGroup = azure.NetworkSecurityGroups.Define(name)
+        //         .WithRegion(location)
+        //         .WithExistingResourceGroup(rgName)
+        //         .DefineRule("minecraft-tcp")
+        //         .AllowInbound()
+        //         .FromAnyAddress()
+        //         .FromAnyPort()
+        //         .ToAnyAddress()
+        //         .ToPort(port)
+        //         .WithProtocol(SecurityRuleProtocol.Tcp)
+        //         .WithPriority(100)
+        //         .WithDescription("Allow Minecraft TCP")
+        //         .Attach()
+        //         .DefineRule("minecraft-udp")
+        //         .AllowInbound()
+        //         .FromAnyAddress()
+        //         .FromAnyPort()
+        //         .ToAnyAddress()
+        //         .ToPort(port)
+        //         .WithProtocol(SecurityRuleProtocol.Udp)
+        //         .WithPriority(101)
+        //         .WithDescription("Allow Minecraft UDP")
+        //         .Attach()
+        //         .Create();
+        //
+        //     return networkSecurityGroup;
+        // }
+
         public readonly struct VmCreateParams
         {
             public string Name { get; }
