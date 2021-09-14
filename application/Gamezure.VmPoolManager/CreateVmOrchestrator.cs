@@ -4,9 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Network.Models;
-using Gamezure.VmPoolManager.Parameters;
 using Gamezure.VmPoolManager.Repository;
-using Gamezure.VmPoolManager.Responses;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
@@ -35,25 +33,7 @@ namespace Gamezure.VmPoolManager
             var poolId = context.GetInput<string>();
             Pool pool = await context.CallActivityAsync<Pool>("CreateVmOrchestrator_GetPool", poolId);
             outputs.Add(JsonConvert.SerializeObject(pool));
-            
-            // Check and potentially create:
-            //  RG Exists & create
-            // var rgParams = new ResourceGroupParameters { Name = pool.ResourceGroupName, Location = pool.Location };
-            // var resourceGroupResponse = await context.CallActivityAsync<ResourceGroupResponse>("CreateVmOrchestrator_EnsureResourceGroup", rgParams);
-            // outputs.Add(JsonConvert.SerializeObject(resourceGroupResponse));
-            //
-            //
-            // //  Ensure VNet
-            // var vnetParams = new VnetParameters
-            // {
-            //     Name = $"{pool.Id}-vnet",
-            //     Location = resourceGroupResponse.Location,
-            //     ResourceGroupName = resourceGroupResponse.Name
-            // };
-            // var vnetResponse = await context.CallActivityAsync<VnetResponse>("CreateVmOrchestrator_EnsureVnet", vnetParams);
-            // outputs.Add(JsonConvert.SerializeObject(vnetResponse));
 
-            
             // Determine VMs present
             
             // Create per new VM:
@@ -110,30 +90,6 @@ namespace Gamezure.VmPoolManager
             }
 
             return null;
-        }
-
-        [FunctionName("CreateVmOrchestrator_EnsureResourceGroup")]
-        public async Task<ResourceGroupResponse> EnsureResourceGroup([ActivityTrigger] ResourceGroupParameters resourceGroupParameters, ILogger log)
-        {
-            var rg = await this.poolManager.CreateResourceGroup(resourceGroupParameters.Name, resourceGroupParameters.Location);
-            return new ResourceGroupResponse
-            {
-                Id = rg.Id,
-                Name = rg.Name,
-                Location = rg.Location
-            };
-        }
-
-        [FunctionName("CreateVmOrchestrator_EnsureVnet")]
-        public async Task<VnetResponse> EnsureVnet([ActivityTrigger] VnetParameters vnetParameters, ILogger log)
-        {
-            var vnet = await this.poolManager.EnsureVnet(vnetParameters.ResourceGroupName, vnetParameters.Location, vnetParameters.Name);
-            return new VnetResponse
-            {
-                Id = vnet.Id,
-                Name = vnet.Name,
-                Location = vnet.Location,
-            };
         }
         
         [FunctionName("CreateVmOrchestrator_CreatePublicIp")]
