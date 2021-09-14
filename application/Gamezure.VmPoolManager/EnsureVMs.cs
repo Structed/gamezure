@@ -80,7 +80,7 @@ namespace Gamezure.VmPoolManager
                     Guid.NewGuid().ToString(),
                     pool.ResourceGroupName,
                     pool.Location,
-                    pool.Vnet
+                    pool.Net
                 );
                 
                 var item = poolManager.CreateVm(vmCreateParams);

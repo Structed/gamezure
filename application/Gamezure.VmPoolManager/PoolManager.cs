@@ -259,15 +259,15 @@ namespace Gamezure.VmPoolManager
             public string UserPassword { get; }
             public string ResourceGroupName { get; }
             public string ResourceLocation { get; }
-            public Pool.VirtualNetwork Vnet { get; }
+            public Pool.Networking Networking { get; }
 
 
-            public VmCreateParams(string name, string userName, string userPassword, string resourceGroupName, string resourceLocation, Pool.VirtualNetwork vnet)
+            public VmCreateParams(string name, string userName, string userPassword, string resourceGroupName, string resourceLocation, Pool.Networking networking)
             {
                 this.Name = name;
                 this.UserName = userName;
                 this.UserPassword = userPassword;
-                this.Vnet = vnet;
+                this.Networking = networking;
                 this.ResourceGroupName = resourceGroupName;
                 this.ResourceLocation = resourceLocation;
             }

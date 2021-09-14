@@ -35,15 +35,34 @@ namespace Gamezure.VmPoolManager
             return JsonSerializer.Serialize(this);
         }
 
-        public class VirtualNetwork
+        public class Networking
         {
-            public string Id { get; }
-            public string Name { get; }
-
-            public VirtualNetwork(string id, string name)
+            public VirtualNetwork Vnet { get; set; }
+            public NetworkSecurityGroup NsgPublic { get; set; }
+            public NetworkSecurityGroup NsgGame { get; set; }
+            
+            public class VirtualNetwork
             {
-                this.Id = id;
-                this.Name= name;
+                public string Id { get; }
+                public string Name { get; }
+
+                public VirtualNetwork(string id, string name)
+                {
+                    this.Id = id;
+                    this.Name = name;
+                }
+            }
+
+            public class NetworkSecurityGroup
+            {
+                public string Id { get; }
+                public string Name { get; }
+
+                public NetworkSecurityGroup(string id, string name)
+                {
+                    this.Id = id;
+                    this.Name = name;
+                }
             }
         }
     }
