@@ -68,6 +68,13 @@ namespace Gamezure.VmPoolManager
                 }
             }
 
+            var vms = await CreateVirtualMachines(pool, log);
+
+            return new OkObjectResult(vms);
+        }
+
+        private async Task<List<IVirtualMachine>> CreateVirtualMachines(Pool pool, ILogger log = null)
+        {
             int vmCount = pool.Vms.Count;
             var vms = new List<IVirtualMachine>(vmCount);
             var tasks = new List<Task<IVirtualMachine>>(vmCount);
@@ -77,23 +84,29 @@ namespace Gamezure.VmPoolManager
                 var vmCreateParams = new PoolManager.VmCreateParams(
                     vm.Name,
                     "gamezure-user",
-                    Guid.NewGuid().ToString(),  // TODO: Move credentials to KeyVault
+                    Guid.NewGuid().ToString(), // TODO: Move credentials to KeyVault
                     pool.ResourceGroupName,
                     pool.Location,
                     pool.Net
                 );
-                
+
                 var item = poolManager.CreateVm(vmCreateParams);
-                log.LogInformation($"Started creating vm {vmCreateParams.Name}");
+                if (!(log is null))
+                {
+                    log.LogInformation($"Started creating vm {vmCreateParams.Name}");
+                }
+
                 tasks.Add(item);
             }
 
+            Task.WaitAll(tasks.ToArray());
+
             foreach (var task in tasks)
             {
-                vms.Add(await task);
+                vms.Add(task.Result);
             }
 
-            return new OkObjectResult(vms);
+            return vms;
         }
     }
 }
