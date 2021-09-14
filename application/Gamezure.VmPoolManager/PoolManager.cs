@@ -117,7 +117,7 @@ namespace Gamezure.VmPoolManager
             return vnetResponse.Value;
         }
 
-        public INetwork CreateVnet(string rgName, string location, string prefix, INetworkSecurityGroup nsgPublic, INetworkSecurityGroup nsgGame)
+        public INetwork FluentCreateVnet(string rgName, string location, string prefix, INetworkSecurityGroup nsgPublic, INetworkSecurityGroup nsgGame)
         {
             var network = azure.Networks.Define($"{prefix}-vnet")
                 .WithRegion(location)
@@ -136,7 +136,7 @@ namespace Gamezure.VmPoolManager
             return network;
         }
 
-        public INetworkSecurityGroup CreateNetworkSecurityGroup(string rgName, string location, string prefix)
+        public INetworkSecurityGroup FluentCreateNetworkSecurityGroup(string rgName, string location, string prefix)
         {
             var name = $"{prefix}-nsg";
             

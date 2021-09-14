@@ -52,9 +52,9 @@ namespace Gamezure.VmPoolManager
 
                 pool.InitializeVmList();
 
-                var nsgPublic = poolManager.CreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, pool.Id + "-public");
-                var nsgGame = poolManager.CreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, pool.Id + "-game");
-                var network = poolManager.CreateVnet(pool.ResourceGroupName, pool.Location, pool.Id, nsgPublic, nsgGame);
+                var nsgPublic = poolManager.FluentCreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, pool.Id + "-public");
+                var nsgGame = poolManager.FluentCreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, pool.Id + "-game");
+                var network = poolManager.FluentCreateVnet(pool.ResourceGroupName, pool.Location, pool.Id, nsgPublic, nsgGame);
                 pool.Net = new Pool.Networking
                 {
                     Vnet = new Pool.Networking.VirtualNetwork(network.Id, network.Name),
