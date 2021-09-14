@@ -11,9 +11,10 @@ using Azure.ResourceManager.Compute.Models;
 using Azure.ResourceManager.Network;
 using Azure.ResourceManager.Network.Models;
 using Azure.ResourceManager.Resources;
-using Azure.ResourceManager.Resources.Models;
+using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
+using ComputeManagementClient = Azure.ResourceManager.Compute.ComputeManagementClient;
 using IPVersion = Azure.ResourceManager.Network.Models.IPVersion;
 using NetworkInterface = Azure.ResourceManager.Network.Models.NetworkInterface;
 using NetworkManagementClient = Azure.ResourceManager.Network.NetworkManagementClient;
@@ -54,7 +55,7 @@ namespace Gamezure.VmPoolManager
         {
         }
         
-        public async Task<VirtualMachine> CreateVm(VmCreateParams vmCreateParams)
+        public async Task<IVirtualMachine> CreateVm(VmCreateParams vmCreateParams)
         {
             var tasks = new List<Task>(3);
             
@@ -67,20 +68,20 @@ namespace Gamezure.VmPoolManager
             tasks.Add(taskNsgGame);
             Task.WaitAll(tasks.ToArray());
 
+            var vmTasks = new List<Task>(2);
             var publicNic = this.FluentCreatePublicNetworkConnection(
                 vmCreateParams.Name,
                 taskVirtualNetwork.Result,
                 taskNsgPublic.Result);
             
             var gameNic = this.FluentCreateGameNetworkConnection(
+                vmCreateParams.Name,
                 taskVirtualNetwork.Result,
                 taskNsgGame.Result);
+            
+            Task.WaitAll(vmTasks.ToArray());
 
-            VirtualNetwork vnet = await EnsureVnet(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.Networking.Vnet.Name);
-
-            var ipAddress = await CreatePublicIpAddressAsync(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.Name);
-            var nic = await CreateNetworkInterfaceAsync(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.Name, vnet.Subnets.First().Id, ipAddress.Id);
-            VirtualMachine vm = await CreateWindowsVmAsync(vmCreateParams, nic.Id); 
+            var vm = await FluentCreateWindowsVm(vmCreateParams, publicNic.Result, gameNic.Result);
 
             return vm;
         }
@@ -226,6 +227,30 @@ namespace Gamezure.VmPoolManager
             return windowsVM;
         }
 
+        public async Task<IVirtualMachine> FluentCreateWindowsVm(VmCreateParams vmCreateParams, INetworkInterface nicPublic, INetworkInterface nicGame, CancellationToken cancellationToken = default)
+        {
+            var imageReference = new ImageReference
+            {
+                Offer = "WindowsServer",
+                Publisher = "MicrosoftWindowsServer",
+                Sku = "2019-Datacenter",
+                Version = "latest"
+            };
+
+            var vm = await this.azure.VirtualMachines.Define(vmCreateParams.Name)
+                .WithRegion(vmCreateParams.ResourceLocation)
+                .WithExistingResourceGroup(vmCreateParams.ResourceGroupName)
+                .WithExistingPrimaryNetworkInterface(nicPublic)
+                .WithLatestWindowsImage(imageReference.Publisher, imageReference.Offer, imageReference.Sku)
+                .WithAdminUsername(vmCreateParams.UserName)
+                .WithAdminPassword(vmCreateParams.UserPassword)
+                .WithExistingSecondaryNetworkInterface(nicGame)
+                .WithSize(Microsoft.Azure.Management.Compute.Fluent.Models.VirtualMachineSizeTypes.StandardD3V2)
+                .CreateAsync(cancellationToken);
+
+            return vm;
+        }
+
         public async Task<NetworkInterface> CreateNetworkInterfaceAsync(string rgName, string location, string namePrefix, string subnetId, string ipAddressId)
         {
             // Create Network interface
@@ -286,7 +311,7 @@ namespace Gamezure.VmPoolManager
             var publicVnetName = network.Name;
             string subnetName = network.Subnets[SUBNET_NAME_PUBLIC].Name;
 
-            INetworkInterface networkInterface = await this.azure.NetworkInterfaces.Define(publicVnetName)
+            INetworkInterface networkInterface = await this.azure.NetworkInterfaces.Define($"{vmName}-public-nic")
                 .WithRegion(network.Region)
                 .WithExistingResourceGroup(networkSecurityGroup.ResourceGroupName)
                 .WithExistingPrimaryNetwork(network)
@@ -307,14 +332,14 @@ namespace Gamezure.VmPoolManager
         /// <param name="cancellationToken"></param>
         /// <returns>The NIC</returns>
         public async Task<INetworkInterface> FluentCreateGameNetworkConnection(
+            string vmName,
             INetwork network,
             INetworkSecurityGroup networkSecurityGroup,
             CancellationToken cancellationToken = default)
         {
-            var publicVnetName = network.Name;
             string subnetName = network.Subnets[SUBNET_NAME_GAME].Name;
 
-            INetworkInterface networkInterface = await this.azure.NetworkInterfaces.Define(publicVnetName)
+            INetworkInterface networkInterface = await this.azure.NetworkInterfaces.Define($"{vmName}-public-nic")
                 .WithRegion(network.Region)
                 .WithExistingResourceGroup(networkSecurityGroup.ResourceGroupName)
                 .WithExistingPrimaryNetwork(network)

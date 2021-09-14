@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Azure;
-using Azure.ResourceManager.Compute.Models;
 using Gamezure.VmPoolManager.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Extensions.Logging;
 
 namespace Gamezure.VmPoolManager
@@ -68,26 +68,27 @@ namespace Gamezure.VmPoolManager
                 }
             }
 
-            int vmCount = pool.DesiredVmCount;
-            List<VirtualMachine> vms = new List<VirtualMachine>(vmCount);
-            List<Task<VirtualMachine>> tasks = new List<Task<VirtualMachine>>(vmCount);
-            
-            for (int i = 0; i < vmCount; i++)
+            int vmCount = pool.Vms.Count;
+            var vms = new List<IVirtualMachine>(vmCount);
+            var tasks = new List<Task<IVirtualMachine>>(vmCount);
+
+            foreach (var vm in pool.Vms)
             {
                 var vmCreateParams = new PoolManager.VmCreateParams(
-                    $"gamezure-vm-{i}",
+                    vm.Name,
                     "gamezure-user",
-                    Guid.NewGuid().ToString(),
+                    Guid.NewGuid().ToString(),  // TODO: Move credentials to KeyVault
                     pool.ResourceGroupName,
                     pool.Location,
                     pool.Net
                 );
                 
                 var item = poolManager.CreateVm(vmCreateParams);
+                log.LogInformation($"Started creating vm {vmCreateParams.Name}");
                 tasks.Add(item);
             }
 
-            foreach (Task<VirtualMachine> task in tasks)
+            foreach (var task in tasks)
             {
                 vms.Add(await task);
             }
