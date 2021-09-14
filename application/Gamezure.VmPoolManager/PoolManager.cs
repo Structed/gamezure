@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,6 +56,26 @@ namespace Gamezure.VmPoolManager
         
         public async Task<VirtualMachine> CreateVm(VmCreateParams vmCreateParams)
         {
+            var tasks = new List<Task>(3);
+            
+            var taskVirtualNetwork = this.azure.Networks.GetByIdAsync(vmCreateParams.Networking.Vnet.Id);
+            var taskNsgPublic = this.azure.NetworkSecurityGroups.GetByIdAsync(vmCreateParams.Networking.NsgPublic.Id);
+            var taskNsgGame = this.azure.NetworkSecurityGroups.GetByIdAsync(vmCreateParams.Networking.NsgGame.Id);
+            
+            tasks.Add(taskVirtualNetwork);
+            tasks.Add(taskNsgPublic);
+            tasks.Add(taskNsgGame);
+            Task.WaitAll(tasks.ToArray());
+
+            var publicNic = this.FluentCreatePublicNetworkConnection(
+                vmCreateParams.Name,
+                taskVirtualNetwork.Result,
+                taskNsgPublic.Result);
+            
+            var gameNic = this.FluentCreateGameNetworkConnection(
+                taskVirtualNetwork.Result,
+                taskNsgGame.Result);
+
             VirtualNetwork vnet = await EnsureVnet(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.Networking.Vnet.Name);
 
             var ipAddress = await CreatePublicIpAddressAsync(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.Name);
@@ -252,6 +273,63 @@ namespace Gamezure.VmPoolManager
                 .WaitForCompletionAsync();
 
             return ipAddress;
+        }
+
+        /// <summary>
+        /// Creates a new NIC in the <see cref="SUBNET_NAME_PUBLIC"/> subnet of the specified <paramref name="network"/>
+        /// </summary>
+        /// <param name="vmName">The VMs name - used as DNS name for the public IP</param>
+        /// <param name="network">A network that should be used for Public Internet traffic</param>
+        /// <param name="networkSecurityGroup">A security group attached to the Network and the Public Subnet</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The NIC</returns>
+        public async Task<INetworkInterface> FluentCreatePublicNetworkConnection(
+            string vmName,
+            INetwork network,
+            INetworkSecurityGroup networkSecurityGroup,
+            CancellationToken cancellationToken = default)
+        {
+            var publicVnetName = network.Name;
+            string subnetName = network.Subnets[SUBNET_NAME_PUBLIC].Name;
+
+            INetworkInterface networkInterface = await this.azure.NetworkInterfaces.Define(publicVnetName)
+                .WithRegion(network.Region)
+                .WithExistingResourceGroup(networkSecurityGroup.ResourceGroupName)
+                .WithExistingPrimaryNetwork(network)
+                .WithSubnet(subnetName)
+                .WithPrimaryPrivateIPAddressDynamic()
+                .WithExistingNetworkSecurityGroup(networkSecurityGroup)
+                .WithNewPrimaryPublicIPAddress(vmName)
+                .CreateAsync(cancellationToken);
+
+            return networkInterface;
+        }
+
+        /// <summary>
+        /// Creates a new NIC in the <see cref="SUBNET_NAME_GAME"/> subnet of the specified <paramref name="network"/>
+        /// </summary>
+        /// <param name="network">A network that should be used for Public Internet traffic</param>
+        /// <param name="networkSecurityGroup">A security group attached to the Network and the Game Subnet</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The NIC</returns>
+        public async Task<INetworkInterface> FluentCreateGameNetworkConnection(
+            INetwork network,
+            INetworkSecurityGroup networkSecurityGroup,
+            CancellationToken cancellationToken = default)
+        {
+            var publicVnetName = network.Name;
+            string subnetName = network.Subnets[SUBNET_NAME_GAME].Name;
+
+            INetworkInterface networkInterface = await this.azure.NetworkInterfaces.Define(publicVnetName)
+                .WithRegion(network.Region)
+                .WithExistingResourceGroup(networkSecurityGroup.ResourceGroupName)
+                .WithExistingPrimaryNetwork(network)
+                .WithSubnet(subnetName)
+                .WithPrimaryPrivateIPAddressDynamic()
+                .WithExistingNetworkSecurityGroup(networkSecurityGroup)
+                .CreateAsync(cancellationToken);
+
+            return networkInterface;
         }
 
         public readonly struct VmCreateParams
