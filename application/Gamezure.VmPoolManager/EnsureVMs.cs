@@ -68,7 +68,6 @@ namespace Gamezure.VmPoolManager
                 }
             }
 
-            string vnetName = "gamezure-vmpool-vnet";
             int vmCount = pool.DesiredVmCount;
             List<VirtualMachine> vms = new List<VirtualMachine>(vmCount);
             List<Task<VirtualMachine>> tasks = new List<Task<VirtualMachine>>(vmCount);
@@ -79,9 +78,9 @@ namespace Gamezure.VmPoolManager
                     $"gamezure-vm-{i}",
                     "gamezure-user",
                     Guid.NewGuid().ToString(),
-                    vnetName,
                     pool.ResourceGroupName,
-                    pool.Location
+                    pool.Location,
+                    pool.Vnet
                 );
                 
                 var item = poolManager.CreateVm(vmCreateParams);

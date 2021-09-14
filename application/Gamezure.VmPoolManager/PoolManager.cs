@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
@@ -52,7 +53,7 @@ namespace Gamezure.VmPoolManager
         
         public async Task<VirtualMachine> CreateVm(VmCreateParams vmCreateParams)
         {
-            VirtualNetwork vnet = await EnsureVnet(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.VnetName);
+            VirtualNetwork vnet = await EnsureVnet(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.Vnet.Name);
 
             var ipAddress = await CreatePublicIpAddressAsync(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.Name);
             var nic = await CreateNetworkInterfaceAsync(vmCreateParams.ResourceGroupName, vmCreateParams.ResourceLocation, vmCreateParams.Name, vnet.Subnets.First().Id, ipAddress.Id);
@@ -256,17 +257,17 @@ namespace Gamezure.VmPoolManager
             public string Name { get; }
             public string UserName { get; }
             public string UserPassword { get; }
-            public string VnetName { get; }
             public string ResourceGroupName { get; }
             public string ResourceLocation { get; }
+            public Pool.VirtualNetwork Vnet { get; }
 
 
-            public VmCreateParams(string name, string userName, string userPassword, string vnetName, string resourceGroupName, string resourceLocation)
+            public VmCreateParams(string name, string userName, string userPassword, string resourceGroupName, string resourceLocation, Pool.VirtualNetwork vnet)
             {
                 this.Name = name;
                 this.UserName = userName;
                 this.UserPassword = userPassword;
-                this.VnetName = vnetName;
+                this.Vnet = vnet;
                 this.ResourceGroupName = resourceGroupName;
                 this.ResourceLocation = resourceLocation;
             }

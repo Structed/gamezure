@@ -12,7 +12,7 @@ namespace Gamezure.VmPoolManager
         public string Location { get; set; }
         public int DesiredVmCount { get; set; }
 
-        public string VnetName { get; set; }
+        public VirtualNetwork Vnet { get; set; }
 
         public List<Vm> Vms { get; private set; } = new List<Vm>();
 
@@ -33,6 +33,18 @@ namespace Gamezure.VmPoolManager
         public override string ToString()
         {
             return JsonSerializer.Serialize(this);
+        }
+
+        public class VirtualNetwork
+        {
+            public string Id { get; }
+            public string Name { get; }
+
+            public VirtualNetwork(string id, string name)
+            {
+                this.Id = id;
+                this.Name= name;
+            }
         }
     }
 }
