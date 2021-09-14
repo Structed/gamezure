@@ -12,7 +12,7 @@ namespace Gamezure.VmPoolManager
         public string Location { get; set; }
         public int DesiredVmCount { get; set; }
 
-        public VirtualNetwork Vnet { get; set; }
+        public Networking Net { get; set; }
 
         public List<Vm> Vms { get; private set; } = new List<Vm>();
 
