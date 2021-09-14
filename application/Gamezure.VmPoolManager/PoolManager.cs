@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
@@ -99,25 +97,6 @@ namespace Gamezure.VmPoolManager
             return exists;
         }
 
-        public async Task<VirtualNetwork> EnsureVnet(string resourceGroupName, string location, string vnetName)
-        {
-            VirtualNetwork vnet;
-            var vnetList = this.virtualNetworksClient.List(resourceGroupName).ToList();
-            bool vnetExists = vnetList.Exists(network => network.Name.Equals(vnetName));
-
-            if (!vnetExists)
-            {
-                vnet = await CreateVirtualNetwork(vnetName, this.virtualNetworksClient, resourceGroupName, location);
-                if (vnet is null)
-                {
-                    throw new Exception($"Could not create vnet {vnetName} in resource group {resourceGroupName}");
-                }
-            }
-            var vnetResponse = await this.virtualNetworksClient.GetAsync(resourceGroupName, vnetName);
-
-            return vnetResponse.Value;
-        }
-
         public INetwork FluentCreateVnet(string rgName, string location, string prefix, INetworkSecurityGroup nsgPublic, INetworkSecurityGroup nsgGame)
         {
             var network = azure.Networks.Define($"{prefix}-vnet")
@@ -168,27 +147,6 @@ namespace Gamezure.VmPoolManager
                 .Create();
             
             return networkSecurityGroup;
-        }
-
-        private static async Task<VirtualNetwork> CreateVirtualNetwork(string vnetName,
-            VirtualNetworksOperations virtualNetworksClient, string resourceGroupName, string location)
-        {
-            var vnet = new VirtualNetwork
-            {
-                Location = location,
-                AddressSpace = new AddressSpace()
-                {
-                    AddressPrefixes = { "10.0.0.0/16" }
-                }
-            };
-            vnet.Subnets.Add(new Subnet
-            {
-                Name = resourceGroupName + "-subnet",
-                AddressPrefix = "10.0.0.0/24",
-            });
-
-            await virtualNetworksClient.StartCreateOrUpdateAsync(resourceGroupName, vnetName, vnet);
-            return vnet;
         }
 
         public async Task<VirtualMachine> CreateWindowsVmAsync(VmCreateParams vmCreateParams, string nicId)
