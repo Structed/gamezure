@@ -22,6 +22,8 @@ namespace Gamezure.VmPoolManager
 {
     public class PoolManager
     {
+        private const string SUBNET_NAME_PUBLIC = "public";
+        private const string SUBNET_NAME_GAME = "game";
         private readonly string subscriptionId;
         private readonly TokenCredential credential;
         private readonly IAzure azure;
@@ -100,11 +102,11 @@ namespace Gamezure.VmPoolManager
                 .WithRegion(location)
                 .WithExistingResourceGroup(rgName)
                 .WithAddressSpace("10.0.0.0/24")
-                .DefineSubnet("public")
+                .DefineSubnet(SUBNET_NAME_PUBLIC)
                     .WithAddressPrefix("10.0.0.0/27")
                     .WithExistingNetworkSecurityGroup(nsgPublic)
                     .Attach()
-                .DefineSubnet("game")
+                .DefineSubnet(SUBNET_NAME_GAME)
                     .WithAddressPrefix("10.0.0.32/27")
                     .WithExistingNetworkSecurityGroup(nsgGame)
                     .Attach()
