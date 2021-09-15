@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.ResourceManager.Compute.Models;
-using Azure.ResourceManager.Network.Models;
 using Gamezure.VmPoolManager.Repository;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
