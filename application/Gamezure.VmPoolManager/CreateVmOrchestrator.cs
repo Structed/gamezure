@@ -43,13 +43,6 @@ namespace Gamezure.VmPoolManager
             return outputs;
         }
 
-        [FunctionName("CreateVmOrchestrator_Hello")]
-        public string SayHello([ActivityTrigger] string name, ILogger log)
-        {
-            log.LogInformation($"Saying hello to {name}.");
-            return $"Hello {name}!";
-        }
-
         [FunctionName("CreateVmOrchestrator_HttpStart")]
         public async Task<HttpResponseMessage> HttpStart(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put")]
@@ -90,31 +83,6 @@ namespace Gamezure.VmPoolManager
             }
 
             return null;
-        }
-        
-        [FunctionName("CreateVmOrchestrator_CreatePublicIp")]
-        public async Task<PublicIPAddress> CreatePublicIp([ActivityTrigger] PoolManager.VmCreateParams vmCreateParams, ILogger log)
-        {
-            log.LogInformation("Creating Public IP Address");
-
-            return await this.poolManager.CreatePublicIpAddressAsync(
-                vmCreateParams.ResourceGroupName,
-                vmCreateParams.ResourceLocation,
-                vmCreateParams.Name);
-        }
-        
-        [FunctionName("CreateVmOrchestrator_CreateNetworkInterface")]
-        public async Task<NetworkInterface> CreateNetworkInterface([ActivityTrigger] IDurableActivityContext inputs, ILogger log)
-        {
-            (string subnetId, string ipAddressId, PoolManager.VmCreateParams vmCreateParams) = inputs.GetInput<(string, string, PoolManager.VmCreateParams)>();
-            log.LogInformation($"Creating Network Interface with IP ID {ipAddressId} on subnet ID {subnetId}");
-
-            return await poolManager.CreateNetworkInterfaceAsync(
-                vmCreateParams.ResourceGroupName,
-                vmCreateParams.ResourceLocation,
-                vmCreateParams.Name,
-                subnetId,
-                ipAddressId);
         }
         
         [FunctionName("CreateVmOrchestrator_CreateWindowsVm")]
