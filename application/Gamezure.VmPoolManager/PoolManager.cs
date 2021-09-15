@@ -206,49 +206,6 @@ namespace Gamezure.VmPoolManager
             return vm;
         }
 
-        public async Task<NetworkInterface> CreateNetworkInterfaceAsync(string rgName, string location, string namePrefix, string subnetId, string ipAddressId)
-        {
-            // Create Network interface
-            var networkInterfaceIpConfiguration = new NetworkInterfaceIPConfiguration
-            {
-                Name = "Primary",
-                Primary = true,
-                Subnet = new Subnet { Id = subnetId },
-                PrivateIPAllocationMethod = IPAllocationMethod.Dynamic,
-                PublicIPAddress = new PublicIPAddress { Id = ipAddressId }
-            };
-            
-            var nic = new NetworkInterface()
-            {
-                Location = location
-            };
-            nic.IpConfigurations.Add(networkInterfaceIpConfiguration);
-            
-            nic = await this.networkManagementClient.NetworkInterfaces
-                .StartCreateOrUpdate(rgName, namePrefix + "_nic", nic)
-                .WaitForCompletionAsync();
-            
-            return nic;
-        }
-
-        public async Task<PublicIPAddress> CreatePublicIpAddressAsync(string rgName, string location, string namePrefix)
-        {
-            // Create IP Address
-            var ipAddress = new PublicIPAddress()
-            {
-                PublicIPAddressVersion = IPVersion.IPv4,
-                PublicIPAllocationMethod = IPAllocationMethod.Dynamic,
-                Location = location,
-            };
-
-
-            ipAddress = await this.networkManagementClient.PublicIPAddresses
-                .StartCreateOrUpdate(rgName, namePrefix + "_ip", ipAddress)
-                .WaitForCompletionAsync();
-
-            return ipAddress;
-        }
-
         /// <summary>
         /// Creates a new NIC in the <see cref="SUBNET_NAME_PUBLIC"/> subnet of the specified <paramref name="network"/>
         /// </summary>
