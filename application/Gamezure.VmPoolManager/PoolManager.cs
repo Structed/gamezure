@@ -6,7 +6,6 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
-using Azure.ResourceManager.Network;
 using Azure.ResourceManager.Network.Models;
 using Azure.ResourceManager.Resources;
 using Microsoft.Azure.Management.Compute.Fluent;
@@ -32,7 +31,6 @@ namespace Gamezure.VmPoolManager
         private readonly NetworkManagementClient networkManagementClient;
         private readonly ResourceGroupsOperations resourceGroupsClient;
         private readonly VirtualMachinesOperations virtualMachinesClient;
-        private readonly VirtualNetworksOperations virtualNetworksClient;
 
         public PoolManager(string subscriptionId, TokenCredential credential, IAzure azure)
         {
@@ -46,7 +44,6 @@ namespace Gamezure.VmPoolManager
             
             resourceGroupsClient = resourceClient.ResourceGroups;
             virtualMachinesClient = computeClient.VirtualMachines;
-            virtualNetworksClient = networkManagementClient.VirtualNetworks;
         }
 
         public PoolManager(string subscriptionId, IAzure azure) : this(subscriptionId, new DefaultAzureCredential(), azure)

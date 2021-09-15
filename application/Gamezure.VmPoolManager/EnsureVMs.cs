@@ -68,12 +68,12 @@ namespace Gamezure.VmPoolManager
                 }
             }
 
-            var vms = await CreateVirtualMachines(pool, log);
+            var vms = CreateVirtualMachines(pool, log);
 
             return new OkObjectResult(vms);
         }
 
-        private async Task<List<IVirtualMachine>> CreateVirtualMachines(Pool pool, ILogger log = null)
+        private List<IVirtualMachine> CreateVirtualMachines(Pool pool, ILogger log = null)
         {
             int vmCount = pool.Vms.Count;
             var vms = new List<IVirtualMachine>(vmCount);
