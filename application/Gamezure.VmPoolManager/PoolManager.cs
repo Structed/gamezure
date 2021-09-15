@@ -297,7 +297,7 @@ namespace Gamezure.VmPoolManager
         {
             string subnetName = network.Subnets[SUBNET_NAME_GAME].Name;
 
-            INetworkInterface networkInterface = await this.azure.NetworkInterfaces.Define($"{vmName}-public-nic")
+            INetworkInterface networkInterface = await this.azure.NetworkInterfaces.Define($"{vmName}-game-nic")
                 .WithRegion(network.Region)
                 .WithExistingResourceGroup(networkSecurityGroup.ResourceGroupName)
                 .WithExistingPrimaryNetwork(network)
