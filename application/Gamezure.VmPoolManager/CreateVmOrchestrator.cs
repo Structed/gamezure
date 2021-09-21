@@ -2,9 +2,9 @@
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Azure.ResourceManager.Compute.Models;
 using Gamezure.VmPoolManager.Repository;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -33,13 +33,24 @@ namespace Gamezure.VmPoolManager
             Pool pool = await context.CallActivityAsync<Pool>("CreateVmOrchestrator_GetPool", poolId);
             outputs.Add(JsonConvert.SerializeObject(pool));
 
-            // Determine VMs present
-            
-            // Create per new VM:
-            //  Create PIP
-            //  Create Windows VM
+            var tasks = new List<Task>();
+            foreach (var vm in pool.Vms)
+            {
+                var vmResultTask = VmResultTask(context, vm, pool, outputs);
+                tasks.Add(vmResultTask);
+            }
+
+            await Task.WhenAll(tasks);
             
             return outputs;
+        }
+
+        private async Task<IVirtualMachine> VmResultTask(IDurableOrchestrationContext context, Vm vm, Pool pool, List<string> outputs)
+        {
+            var vmCreateParams = new PoolManager.VmCreateParams(vm.Name, "gamezure", "DzPY2uwGYxofahfD38CDrUjhc", pool.ResourceGroupName, pool.Location, pool.Net);
+            var vmResultTask = await context.CallActivityAsync<IVirtualMachine>("CreateVmOrchestrator_CreateWindowsVm", vmCreateParams);
+            outputs.Add($"Finished creation of {vmResultTask}");
+            return vmResultTask;
         }
 
         [FunctionName("CreateVmOrchestrator_HttpStart")]
@@ -85,12 +96,11 @@ namespace Gamezure.VmPoolManager
         }
         
         [FunctionName("CreateVmOrchestrator_CreateWindowsVm")]
-        public async Task<VirtualMachine> CreateWindowsVm([ActivityTrigger] IDurableActivityContext inputs, ILogger log)
+        public async Task<IVirtualMachine> CreateWindowsVm([ActivityTrigger] PoolManager.VmCreateParams vmCreateParams, ILogger log)
         {
-            (string nicId, PoolManager.VmCreateParams vmCreateParams) = inputs.GetInput<(string, PoolManager.VmCreateParams)>();
             log.LogInformation($"Creating Virtual Machine");
-
-            return await poolManager.CreateWindowsVmAsync(vmCreateParams, nicId);
+            
+            return await poolManager.CreateVm(vmCreateParams);
         }
     }
 }
