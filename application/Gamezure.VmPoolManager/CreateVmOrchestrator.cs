@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -29,19 +30,27 @@ namespace Gamezure.VmPoolManager
             [OrchestrationTrigger] IDurableOrchestrationContext context)
         {
             var outputs = new List<string>();
-            var poolId = context.GetInput<string>();
-            Pool pool = await context.CallActivityAsync<Pool>("CreateVmOrchestrator_GetPool", poolId);
-            outputs.Add(JsonConvert.SerializeObject(pool));
 
-            var tasks = new List<Task>();
-            foreach (var vm in pool.Vms)
+            try
             {
-                var vmResultTask = VmResultTask(context, vm, pool, outputs);
-                tasks.Add(vmResultTask);
+                var poolId = context.GetInput<string>();
+                Pool pool = await context.CallActivityAsync<Pool>("CreateVmOrchestrator_GetPool", poolId);
+                outputs.Add(JsonConvert.SerializeObject(pool));
+
+                var tasks = new List<Task>();
+                foreach (var vm in pool.Vms)
+                {
+                    var vmResultTask = VmResultTask(context, vm, pool, outputs);
+                    tasks.Add(vmResultTask);
+                }
+
+                await Task.WhenAll(tasks);
             }
-            
-            await Task.WhenAll(tasks);
-            
+            catch (Exception e)
+            {
+                outputs.Add(e.Message);
+            }
+
             return outputs;
         }
 
