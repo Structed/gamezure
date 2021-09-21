@@ -6,14 +6,11 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
-using Azure.ResourceManager.Network.Models;
 using Azure.ResourceManager.Resources;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using ComputeManagementClient = Azure.ResourceManager.Compute.ComputeManagementClient;
-using IPVersion = Azure.ResourceManager.Network.Models.IPVersion;
-using NetworkInterface = Azure.ResourceManager.Network.Models.NetworkInterface;
 using NetworkManagementClient = Azure.ResourceManager.Network.NetworkManagementClient;
 using NetworkProfile = Azure.ResourceManager.Compute.Models.NetworkProfile;
 
@@ -261,27 +258,6 @@ namespace Gamezure.VmPoolManager
                 .CreateAsync(cancellationToken);
 
             return networkInterface;
-        }
-
-        public readonly struct VmCreateParams
-        {
-            public string Name { get; }
-            public string UserName { get; }
-            public string UserPassword { get; }
-            public string ResourceGroupName { get; }
-            public string ResourceLocation { get; }
-            public Pool.Networking Networking { get; }
-
-
-            public VmCreateParams(string name, string userName, string userPassword, string resourceGroupName, string resourceLocation, Pool.Networking networking)
-            {
-                this.Name = name;
-                this.UserName = userName;
-                this.UserPassword = userPassword;
-                this.Networking = networking;
-                this.ResourceGroupName = resourceGroupName;
-                this.ResourceLocation = resourceLocation;
-            }
         }
     }
 }

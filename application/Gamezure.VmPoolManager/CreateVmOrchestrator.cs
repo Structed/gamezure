@@ -39,7 +39,7 @@ namespace Gamezure.VmPoolManager
                 var vmResultTask = VmResultTask(context, vm, pool, outputs);
                 tasks.Add(vmResultTask);
             }
-
+            
             await Task.WhenAll(tasks);
             
             return outputs;
@@ -47,7 +47,7 @@ namespace Gamezure.VmPoolManager
 
         private async Task<IVirtualMachine> VmResultTask(IDurableOrchestrationContext context, Vm vm, Pool pool, List<string> outputs)
         {
-            var vmCreateParams = new PoolManager.VmCreateParams(vm.Name, "gamezure", "DzPY2uwGYxofahfD38CDrUjhc", pool.ResourceGroupName, pool.Location, pool.Net);
+            var vmCreateParams = new VmCreateParams(vm.Name, "gamezure", "DzPY2uwGYxofahfD38CDrUjhc", pool.ResourceGroupName, pool.Location, pool.Net);
             var vmResultTask = await context.CallActivityAsync<IVirtualMachine>("CreateVmOrchestrator_CreateWindowsVm", vmCreateParams);
             outputs.Add($"Finished creation of {vmResultTask}");
             return vmResultTask;
@@ -96,7 +96,7 @@ namespace Gamezure.VmPoolManager
         }
         
         [FunctionName("CreateVmOrchestrator_CreateWindowsVm")]
-        public async Task<IVirtualMachine> CreateWindowsVm([ActivityTrigger] PoolManager.VmCreateParams vmCreateParams, ILogger log)
+        public async Task<IVirtualMachine> CreateWindowsVm([ActivityTrigger] VmCreateParams vmCreateParams, ILogger log)
         {
             log.LogInformation($"Creating Virtual Machine");
             
