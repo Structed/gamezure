@@ -35,20 +35,6 @@ resource "azurerm_role_assignment" "contributor_role_assignment" {
   principal_id         = var.sp_client_id
 }
 
-resource "azurerm_virtual_network" "network_vmpool" {
-  name                = "${local.vmpool_prefix}-vnet"
-  address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.rg_vmpool.location
-  resource_group_name = azurerm_resource_group.rg_vmpool.name
-}
-
-resource "azurerm_subnet" "subnet_vmpool" {
-  name                 = "${local.vmpool_prefix}-subnet"
-  resource_group_name  = azurerm_resource_group.rg_vmpool.name
-  virtual_network_name = azurerm_virtual_network.network_vmpool.name
-  address_prefixes     = ["10.0.2.0/24"]
-}
-
 resource "azurerm_storage_account" "storage" {
   name                     = replace("${var.prefix}storage", "-", "")
   resource_group_name      = azurerm_resource_group.rg_management.name
