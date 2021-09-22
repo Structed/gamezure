@@ -82,6 +82,7 @@ namespace Gamezure.VmPoolManager
             {
                 var vmCreateParams = new VmCreateParams(
                     vm.Name,
+                    vm.PoolId,
                     "gamezure-user",
                     Guid.NewGuid().ToString(), // TODO: Move credentials to KeyVault
                     pool.ResourceGroupName,

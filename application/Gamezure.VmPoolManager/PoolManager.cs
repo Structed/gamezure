@@ -77,7 +77,7 @@ namespace Gamezure.VmPoolManager
             var vmResult = new Vm
             {
                 Name = vm.Name,
-                PoolId = vmCreateParams.ResourceGroupName,
+                PoolId = vmCreateParams.PoolId,
                 PublicIp = vm.GetPrimaryPublicIPAddress().IPAddress,
                 ResourceId = vm.Id
             };
