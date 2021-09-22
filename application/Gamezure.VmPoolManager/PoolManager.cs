@@ -224,7 +224,6 @@ namespace Gamezure.VmPoolManager
             INetworkSecurityGroup networkSecurityGroup,
             CancellationToken cancellationToken = default)
         {
-            var publicVnetName = network.Name;
             string subnetName = network.Subnets[SUBNET_NAME_PUBLIC].Name;
 
             INetworkInterface networkInterface = await this.azure.NetworkInterfaces.Define($"{vmName}-public-nic")
@@ -243,6 +242,7 @@ namespace Gamezure.VmPoolManager
         /// <summary>
         /// Creates a new NIC in the <see cref="SUBNET_NAME_GAME"/> subnet of the specified <paramref name="network"/>
         /// </summary>
+        /// <param name="vmName">The name of teh VM. Will be used to generate the NIC's name</param>
         /// <param name="network">A network that should be used for Public Internet traffic</param>
         /// <param name="networkSecurityGroup">A security group attached to the Network and the Game Subnet</param>
         /// <param name="cancellationToken"></param>
