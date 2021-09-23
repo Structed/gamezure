@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
@@ -50,9 +51,13 @@ namespace Gamezure.VmPoolManager
 
                 pool.InitializeVmList();
 
-                var nsgPublic = poolManager.FluentCreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, pool.Id + "-public");
-                var nsgGame = poolManager.FluentCreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, pool.Id + "-game");
-                var network = poolManager.FluentCreateVnet(pool.ResourceGroupName, pool.Location, pool.Id, nsgPublic, nsgGame);
+                var tags = new Dictionary<string, string>
+                {
+                    { "gamezure-pool-id", pool.Id }
+                };
+                var nsgPublic = poolManager.FluentCreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, pool.Id + "-public", tags);
+                var nsgGame = poolManager.FluentCreateNetworkSecurityGroup(pool.ResourceGroupName, pool.Location, pool.Id + "-game", tags);
+                var network = poolManager.FluentCreateVnet(pool.ResourceGroupName, pool.Location, pool.Id, nsgPublic, nsgGame, tags);
                 pool.Net = new Pool.Networking
                 {
                     Vnet = new Pool.Networking.VirtualNetwork(network.Id, network.Name),

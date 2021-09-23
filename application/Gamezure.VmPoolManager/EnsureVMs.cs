@@ -77,6 +77,11 @@ namespace Gamezure.VmPoolManager
             int vmCount = pool.Vms.Count;
             var vms = new List<Vm>(vmCount);
             var tasks = new List<Task<Vm>>(vmCount);
+            
+            var tags = new Dictionary<string, string>
+            {
+                { "gamezure-pool-id", pool.Id }
+            };
 
             foreach (var vm in pool.Vms)
             {
@@ -87,6 +92,7 @@ namespace Gamezure.VmPoolManager
                     Guid.NewGuid().ToString(), // TODO: Move credentials to KeyVault
                     pool.ResourceGroupName,
                     pool.Location,
+                    tags,
                     pool.Net
                 );
 

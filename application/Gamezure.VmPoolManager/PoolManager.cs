@@ -54,16 +54,18 @@ namespace Gamezure.VmPoolManager
             var publicNic = this.FluentCreatePublicNetworkConnection(
                 vmCreateParams.Name,
                 taskVirtualNetwork.Result,
-                taskNsgPublic.Result);
+                taskNsgPublic.Result,
+                vmCreateParams.Tags);
             
             var gameNic = this.FluentCreateGameNetworkConnection(
                 vmCreateParams.Name,
                 taskVirtualNetwork.Result,
-                taskNsgGame.Result);
+                taskNsgGame.Result,
+                vmCreateParams.Tags);
             
             Task.WaitAll(vmTasks.ToArray());
 
-            var vm = await FluentCreateWindowsVm(vmCreateParams, publicNic.Result, gameNic.Result);
+            var vm = await FluentCreateWindowsVm(vmCreateParams, publicNic.Result, gameNic.Result, vmCreateParams.Tags);
             var vmResult = new Vm
             {
                 Name = vm.Name,
@@ -88,11 +90,18 @@ namespace Gamezure.VmPoolManager
             return exists;
         }
 
-        public INetwork FluentCreateVnet(string rgName, string location, string prefix, INetworkSecurityGroup nsgPublic, INetworkSecurityGroup nsgGame)
+        public INetwork FluentCreateVnet(
+            string rgName,
+            string location,
+            string prefix,
+            INetworkSecurityGroup nsgPublic,
+            INetworkSecurityGroup nsgGame,
+            IDictionary<string, string> tags)
         {
             var network = azure.Networks.Define($"{prefix}-vnet")
                 .WithRegion(location)
                 .WithExistingResourceGroup(rgName)
+                .WithTags(tags)
                 .WithAddressSpace("10.0.0.0/24")
                 .DefineSubnet(SUBNET_NAME_PUBLIC)
                     .WithAddressPrefix("10.0.0.0/27")
@@ -107,7 +116,7 @@ namespace Gamezure.VmPoolManager
             return network;
         }
 
-        public INetworkSecurityGroup FluentCreateNetworkSecurityGroup(string rgName, string location, string prefix)
+        public INetworkSecurityGroup FluentCreateNetworkSecurityGroup(string rgName, string location, string prefix, IDictionary<string, string> tags)
         {
             var name = $"{prefix}-nsg";
             
@@ -115,6 +124,7 @@ namespace Gamezure.VmPoolManager
             var networkSecurityGroup = azure.NetworkSecurityGroups.Define(name)
                 .WithRegion(location)
                 .WithExistingResourceGroup(rgName)
+                .WithTags(tags)
                 .DefineRule("minecraft-tcp")
                 .AllowInbound()
                 .FromAnyAddress()
@@ -140,7 +150,12 @@ namespace Gamezure.VmPoolManager
             return networkSecurityGroup;
         }
 
-        public async Task<IVirtualMachine> FluentCreateWindowsVm(VmCreateParams vmCreateParams, INetworkInterface nicPublic, INetworkInterface nicGame, CancellationToken cancellationToken = default)
+        public async Task<IVirtualMachine> FluentCreateWindowsVm(
+            VmCreateParams vmCreateParams,
+            INetworkInterface nicPublic,
+            INetworkInterface nicGame,
+            IDictionary<string, string> tags,
+            CancellationToken cancellationToken = default)
         {
             var imageReference = new ImageReference
             {
@@ -159,6 +174,7 @@ namespace Gamezure.VmPoolManager
                 .WithAdminPassword(vmCreateParams.UserPassword)
                 .WithExistingSecondaryNetworkInterface(nicGame)
                 .WithSize(Microsoft.Azure.Management.Compute.Fluent.Models.VirtualMachineSizeTypes.StandardD3V2)
+                .WithTags(tags)
                 .CreateAsync(cancellationToken);
 
             return vm;
@@ -170,12 +186,13 @@ namespace Gamezure.VmPoolManager
         /// <param name="vmName">The VMs name - used as DNS name for the public IP</param>
         /// <param name="network">A network that should be used for Public Internet traffic</param>
         /// <param name="networkSecurityGroup">A security group attached to the Network and the Public Subnet</param>
+        /// <param name="tags">Azure resource tags</param>
         /// <param name="cancellationToken"></param>
         /// <returns>The NIC</returns>
-        public async Task<INetworkInterface> FluentCreatePublicNetworkConnection(
-            string vmName,
+        public async Task<INetworkInterface> FluentCreatePublicNetworkConnection(string vmName,
             INetwork network,
             INetworkSecurityGroup networkSecurityGroup,
+            IDictionary<string, string> tags,
             CancellationToken cancellationToken = default)
         {
             string subnetName = network.Subnets[SUBNET_NAME_PUBLIC].Name;
@@ -188,6 +205,7 @@ namespace Gamezure.VmPoolManager
                 .WithPrimaryPrivateIPAddressDynamic()
                 .WithExistingNetworkSecurityGroup(networkSecurityGroup)
                 .WithNewPrimaryPublicIPAddress(vmName)
+                .WithTags(tags)
                 .CreateAsync(cancellationToken);
 
             return networkInterface;
@@ -199,12 +217,14 @@ namespace Gamezure.VmPoolManager
         /// <param name="vmName">The name of teh VM. Will be used to generate the NIC's name</param>
         /// <param name="network">A network that should be used for Public Internet traffic</param>
         /// <param name="networkSecurityGroup">A security group attached to the Network and the Game Subnet</param>
+        /// <param name="tags">Azure resource tags</param>
         /// <param name="cancellationToken"></param>
         /// <returns>The NIC</returns>
         public async Task<INetworkInterface> FluentCreateGameNetworkConnection(
             string vmName,
             INetwork network,
             INetworkSecurityGroup networkSecurityGroup,
+            IDictionary<string, string> tags,
             CancellationToken cancellationToken = default)
         {
             string subnetName = network.Subnets[SUBNET_NAME_GAME].Name;
@@ -216,6 +236,7 @@ namespace Gamezure.VmPoolManager
                 .WithSubnet(subnetName)
                 .WithPrimaryPrivateIPAddressDynamic()
                 .WithExistingNetworkSecurityGroup(networkSecurityGroup)
+                .WithTags(tags)
                 .CreateAsync(cancellationToken);
 
             return networkInterface;
