@@ -9,6 +9,7 @@ using Azure.ResourceManager.Resources;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
+using Microsoft.Azure.Management.Network.Fluent.Models;
 
 namespace Gamezure.VmPoolManager
 {
@@ -50,11 +51,14 @@ namespace Gamezure.VmPoolManager
             tasks.Add(taskNsgGame);
             Task.WaitAll(tasks.ToArray());
 
+            var taskPip = await this.FluentCreatePublicIp(vmCreateParams);
+
             var vmTasks = new List<Task>(2);
             var publicNic = this.FluentCreatePublicNetworkConnection(
                 vmCreateParams.Name,
                 taskVirtualNetwork.Result,
                 taskNsgPublic.Result,
+                taskPip,
                 vmCreateParams.Tags);
             
             var gameNic = this.FluentCreateGameNetworkConnection(
@@ -186,12 +190,14 @@ namespace Gamezure.VmPoolManager
         /// <param name="vmName">The VMs name - used as DNS name for the public IP</param>
         /// <param name="network">A network that should be used for Public Internet traffic</param>
         /// <param name="networkSecurityGroup">A security group attached to the Network and the Public Subnet</param>
+        /// <param name="publicIpAddress">The public IP address to use for teh VM. Should be a statically allocated IP</param>
         /// <param name="tags">Azure resource tags</param>
         /// <param name="cancellationToken"></param>
         /// <returns>The NIC</returns>
         public async Task<INetworkInterface> FluentCreatePublicNetworkConnection(string vmName,
             INetwork network,
             INetworkSecurityGroup networkSecurityGroup,
+            IPublicIPAddress publicIpAddress,
             IDictionary<string, string> tags,
             CancellationToken cancellationToken = default)
         {
@@ -204,11 +210,25 @@ namespace Gamezure.VmPoolManager
                 .WithSubnet(subnetName)
                 .WithPrimaryPrivateIPAddressDynamic()
                 .WithExistingNetworkSecurityGroup(networkSecurityGroup)
-                .WithNewPrimaryPublicIPAddress(vmName)
+                .WithExistingPrimaryPublicIPAddress(publicIpAddress)
                 .WithTags(tags)
                 .CreateAsync(cancellationToken);
 
             return networkInterface;
+        }
+
+        public async Task<IPublicIPAddress> FluentCreatePublicIp(VmCreateParams vmCreateParams, CancellationToken cancellationToken = default)
+        {
+            var pip = await this.azure.PublicIPAddresses.Define($"{vmCreateParams.Name}-pip")
+                .WithRegion(vmCreateParams.ResourceLocation)
+                .WithExistingResourceGroup(vmCreateParams.ResourceGroupName)
+                .WithTags(vmCreateParams.Tags)
+                .WithLeafDomainLabel(vmCreateParams.Name)
+                .WithStaticIP()
+                .WithSku(PublicIPSkuType.Standard)
+                .CreateAsync(cancellationToken);
+
+            return pip;
         }
 
         /// <summary>
