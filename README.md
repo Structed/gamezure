@@ -1,10 +1,12 @@
 # Gamezure
 Azure Game Streaming VM management
 
-Gamezure is a serverless application, which allows you to define a Pool of VMs, and Gamezure will take care of having as many VMs as specified in that pool.
+Gamezure is a serverless application/API, which allows you to define a Pool of VMs; with an additional API call, Gamezure will take care of having as many VMs as specified in that pool - see docs below.
 The pool not only consists of the created VMs, but also of two networks, two NICs per VM and a network security group for each of those networks, the machines have an internal network (e.g. for gameservers) and an external interface, reachable from the public Internet.
 The API is built using C# and Azure Functions, making use of the Durable Functions framework.
 Data is stored in a Cosmos Db, which uses serverless billing to reduce the baseline cost, as there is not much happening on database side.
+
+
 
 
 # Prerequisites
