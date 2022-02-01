@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 
@@ -40,7 +40,7 @@ namespace Gamezure.VmPoolManager.Repository
 
                 await Task.WhenAll(tasks);
             }
-            catch (Exception e)
+            catch (System.Exception e)
             {
                 // Console.WriteLine(e);
                 throw;
@@ -51,6 +51,25 @@ namespace Gamezure.VmPoolManager.Repository
         public Task<ItemResponse<Vm>> Get(string name)
         {
             return this.container.ReadItemAsync<Vm>(name, new PartitionKey(name));
+        }
+
+        public async Task<int> GetToBeCreatedCountByPoolId(string poolId)
+        {
+            var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM T WHERE T.poolId = @poolId")
+                .WithParameter("@poolId", poolId);
+            using (FeedIterator<int> resultSetIterator = this.container.GetItemQueryIterator<int>(query, requestOptions: new QueryRequestOptions
+            {
+                PartitionKey = new PartitionKey(poolId)
+            }))
+            {
+                while (resultSetIterator.HasMoreResults)
+                {
+                    FeedResponse<int> response = await resultSetIterator.ReadNextAsync();
+                    return response.First();    // TODO: add error handling!
+                }
+            }
+
+            return 0;
         }
 
         public async Task<List<Vm>> GetAllByPoolId(string poolId)
