@@ -1,6 +1,12 @@
 # Gamezure
 Azure Game Streaming VM management
 
+Gamezure is a serverless application, which allows you to define a Pool of VMs, and Gamezure will take care of having as many VMs as specified in that pool.
+The pool not only consists of the created VMs, but also of two networks, two NICs per VM and a network security group for each of those networks, the machines have an internal network (e.g. for gameservers) and an external interface, reachable from the public Internet.
+The API is built using C# and Azure Functions, making use of the Durable Functions framework.
+Data is stored in a Cosmos Db, which uses serverless billing to reduce the baseline cost, as there is not much happening on database side.
+
+
 # Prerequisites
 * An [Azure Subscription](https://azure.microsoft.com/en-us/solutions/gaming/)
 * [An Azure Service Principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal)
@@ -32,4 +38,23 @@ Azure Game Streaming VM management
 * Azure BlobStorage, or use [Azurite](https://github.com/Azure/Azurite) as a local storage emulator.
 
 # Docs
-*  [Application flow](./docs/flow.md)
+* [Application flow](./docs/flow.md)
+
+## Routes
+### Adding a pool
+    {{BASE_URI}}/AddPool?code={{AZURE_FUNCTION_KEY}}
+
+With a body consisting like the following example JSON:
+
+````json
+{
+"id": "pool-2",
+"resourceGroupName": "rg-pool1-test",
+"location": "westeurope",
+"desiredVmCount": 2
+}
+````
+
+
+### Trigger pool VM check
+    {{BASE_URI}}/CreateVmOrchestrator_HttpStart??code={{AZURE_FUNCTION_KEY}}&poolId={{poolId}}
