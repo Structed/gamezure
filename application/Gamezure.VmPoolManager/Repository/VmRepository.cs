@@ -76,8 +76,6 @@ namespace Gamezure.VmPoolManager.Repository
                         // Console.WriteLine($"\nQueryWithSqlParameters Diagnostics: {response.Diagnostics.ToString()}");
                     }
                 }
-
-                // Assert("Expected only 1 family", results.Count == 1);
             }
 
             return results;

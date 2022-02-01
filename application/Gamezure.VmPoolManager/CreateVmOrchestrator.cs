@@ -25,8 +25,7 @@ namespace Gamezure.VmPoolManager
         }
 
         [FunctionName("CreateVmOrchestrator")]
-        public async Task<List<string>> RunOrchestrator(
-            [OrchestrationTrigger] IDurableOrchestrationContext context)
+        public async Task<List<string>> RunOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
         {
             var outputs = new List<string>();
 

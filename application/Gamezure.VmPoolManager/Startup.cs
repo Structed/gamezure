@@ -25,7 +25,7 @@ namespace Gamezure.VmPoolManager
             string connectionString = Environment.GetEnvironmentVariable("CosmosDb");
 
             var credentials = new AzureCredentialsFactory().FromServicePrincipal(clientId, clientSecret, tenantId, AzureEnvironment.AzureGlobalCloud);
-            IAzure azure = Microsoft.Azure.Management.Fluent.Azure.Authenticate(credentials).WithSubscription(subscriptionId);
+            var azure = Microsoft.Azure.Management.Fluent.Azure.Authenticate(credentials).WithSubscription(subscriptionId);
             
             var clientOptions = new CosmosClientOptions
             {

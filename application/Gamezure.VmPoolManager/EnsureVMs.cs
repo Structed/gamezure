@@ -25,6 +25,7 @@ namespace Gamezure.VmPoolManager
         }
         
         [FunctionName("EnsureVMs")]
+        [Obsolete("Use durable function instead!")]
         public async Task<IActionResult> RunAsync(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = null)]
             HttpRequest req, ILogger log)
