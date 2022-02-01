@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Gamezure.VmPoolManager.Exceptions;
 using Gamezure.VmPoolManager.Repository;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
@@ -33,6 +34,10 @@ namespace Gamezure.VmPoolManager
             {
                 var poolId = context.GetInput<string>();
                 Pool pool = await context.CallActivityAsync<Pool>("CreateVmOrchestrator_GetPool", poolId);
+                if (pool is null)
+                {
+                    throw new PoolNotFoundException(poolId);
+                }
                 outputs.Add(JsonConvert.SerializeObject(pool));
                 
                 var tags = new Dictionary<string, string>
