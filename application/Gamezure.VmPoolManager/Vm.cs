@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Gamezure.VmPoolManager
 {
@@ -8,13 +9,19 @@ namespace Gamezure.VmPoolManager
         /// <summary>
         /// Effectively the name of the VM
         /// </summary>
-        // [JsonPropertyName("id")]
-        public string Name { get; set; }
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
         public string PoolId { get; set; }
+        public string ResourceGroupName { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
         public string ResourceId { get; set; } = string.Empty;
         public string PublicIp { get; set; } = string.Empty;
+        public string PublicIpId { get; set; } = string.Empty;
+        public string PublicNicId { get; set; } = string.Empty;
+        public string GameNicId { get; set; } = string.Empty;
         public ProvisioningState State { get; private set;  } = ProvisioningState.None;
-        public string Password { get; set; }
+        public string Username { get; set; } = "gamezure";
+        public string UserPass { get; set; }
 
         /// <summary>
         /// Advance the state to the next possible state
@@ -35,6 +42,16 @@ namespace Gamezure.VmPoolManager
             }
 
             return this.State;
+        }
+        
+        public bool SetProvisioningState(ProvisioningState state)
+        {
+            if (state == this.State + 1) {
+                this.State = state;
+                return true;
+            } else {
+                return false;
+            }
         }
 
         public override string ToString()

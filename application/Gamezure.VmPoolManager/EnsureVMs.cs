@@ -25,6 +25,7 @@ namespace Gamezure.VmPoolManager
         }
         
         [FunctionName("EnsureVMs")]
+        [Obsolete("Use durable function instead!")]
         public async Task<IActionResult> RunAsync(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = null)]
             HttpRequest req, ILogger log)
@@ -74,19 +75,18 @@ namespace Gamezure.VmPoolManager
 
         private List<Vm> CreateVirtualMachines(Pool pool, ILogger log = null)
         {
-            int vmCount = pool.Vms.Count;
-            var vms = new List<Vm>(vmCount);
-            var tasks = new List<Task<Vm>>(vmCount);
+            var vms = this.poolManager.InitializeVmList(pool, () => Guid.NewGuid().ToString());
+            var tasks = new List<Task<Vm>>(vms.Count);
             
             var tags = new Dictionary<string, string>
             {
                 { "gamezure-pool-id", pool.Id }
             };
 
-            foreach (var vm in pool.Vms)
+            foreach (var vm in vms)
             {
                 var vmCreateParams = new VmCreateParams(
-                    vm.Name,
+                    vm.Id,
                     vm.PoolId,
                     "gamezure-user",
                     Guid.NewGuid().ToString(), // TODO: Move credentials to KeyVault

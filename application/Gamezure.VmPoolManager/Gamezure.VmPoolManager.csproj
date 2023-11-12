@@ -8,6 +8,7 @@
         <PackageReference Include="Azure.ResourceManager.Compute" Version="1.0.0-preview.2" />
         <PackageReference Include="Azure.ResourceManager.Network" Version="1.0.0-preview.2" />
         <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-preview.2" />
+        <PackageReference Include="IEvangelist.Azure.CosmosRepository" Version="2.5.0" />
         <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.21.0" />
         <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
         <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.38.0" />
