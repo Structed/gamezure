@@ -9,18 +9,10 @@ namespace Gamezure.VmPoolManager.Repository
 
         private readonly Container container;
 
-        public PoolRepository(string connectionString)
+        public PoolRepository(CosmosClient client)
         {
-            var clientOptions = new CosmosClientOptions
-            {
-                SerializerOptions = new CosmosSerializationOptions
-                {
-                    PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
-                }
-            };
-            this.client = new CosmosClient(connectionString, clientOptions);
-            
-            this.container = client.GetContainer("gamezure-db", "vmpool");
+            this.client = client;
+            this.container = client.GetContainer("gamezure-db", "pool");
         }
 
         public Task<ItemResponse<Pool>> Save(Pool pool)

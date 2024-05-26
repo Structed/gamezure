@@ -17,11 +17,13 @@ namespace Gamezure.VmPoolManager
     public class AddPool
     {
         private readonly PoolRepository poolRepository;
+        private readonly VmRepository vmRepository;
         private readonly PoolManager poolManager;
 
-        public AddPool(PoolRepository poolRepository, PoolManager poolManager)
+        public AddPool(PoolRepository poolRepository, VmRepository vmRepository, PoolManager poolManager)
         {
             this.poolRepository = poolRepository;
+            this.vmRepository = vmRepository;
             this.poolManager = poolManager;
         }
         
@@ -48,8 +50,6 @@ namespace Gamezure.VmPoolManager
                 {
                     return new ObjectResult(e) {StatusCode = (int)e.StatusCode};
                 }
-
-                pool.InitializeVmList();
 
                 var tags = new Dictionary<string, string>
                 {

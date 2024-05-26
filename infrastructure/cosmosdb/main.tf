@@ -31,13 +31,44 @@ resource "azurerm_cosmosdb_sql_database" "gamezure_db" {
   # Must not set "throughput" for serverless
 }
 
-resource "azurerm_cosmosdb_sql_container" "gamezure_db_vmpool_container" {
-  name                = "vmpool"
+resource "azurerm_cosmosdb_sql_container" "gamezure_db_pool_container" {
+  name                = "pool"
   resource_group_name = azurerm_cosmosdb_account.cosmosdb_account.resource_group_name
   account_name        = azurerm_cosmosdb_account.cosmosdb_account.name
   database_name       = azurerm_cosmosdb_sql_database.gamezure_db.name
 
   partition_key_path    = "/id"
+  partition_key_version = 1
+  # Must not set "throughput" for serverless
+
+  indexing_policy {
+    indexing_mode = "Consistent"
+
+    included_path {
+      path = "/*"
+    }
+
+    included_path {
+      path = "/included/?"
+    }
+
+    excluded_path {
+      path = "/excluded/?"
+    }
+  }
+
+  #   unique_key {
+  #     paths = ["/definition/idlong", "/definition/idshort"]
+  #   }
+}
+
+resource "azurerm_cosmosdb_sql_container" "gamezure_db_vms_container" {
+  name                = "vm"
+  resource_group_name = azurerm_cosmosdb_account.cosmosdb_account.resource_group_name
+  account_name        = azurerm_cosmosdb_account.cosmosdb_account.name
+  database_name       = azurerm_cosmosdb_sql_database.gamezure_db.name
+
+  partition_key_path    = "/poolId"
   partition_key_version = 1
   # Must not set "throughput" for serverless
 
